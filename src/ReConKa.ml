@@ -35,11 +35,18 @@ let replay fname =
   let () = Yojson.Basic.read_space lex_st lex_buf in
   let () = Yojson.Basic.read_colon lex_st lex_buf in
   let () = Yojson.Basic.read_space lex_st lex_buf in
-  let _ = Yojson.Basic.read_sequence
+  let progress = Progress_report.create 80 '#' in
+  let final = Yojson.Basic.read_sequence
       (fun state x y ->
          let step = Trace.step_of_yojson (Yojson.Basic.read_json x y) in
-      Replay.do_step (Model.signatures env) state step)
-      (Edges.empty ~with_connected_components:true) lex_st lex_buf in
+         let state' = Replay.do_step (Model.signatures env) state step in
+         let () =
+           Progress_report.tick
+             state'.Replay.time 0. state'.Replay.event 0. progress in
+         state')
+      Replay.init_state lex_st lex_buf in
+  let () = Progress_report.complete_progress_bar
+      final.Replay.time final.Replay.event progress in
   let () = Yojson.Basic.read_space lex_st lex_buf in
   let () = try Yojson.Basic.read_object_end lex_buf
     with Yojson.End_of_object -> () in
@@ -56,6 +63,13 @@ let main () =
       usage in
   if!file = "" then
     Arg.usage options usage
-  else replay !file
+  else
+    try
+      replay !file
+    with
+    | ExceptionDefn.Internal_Error er
+    | ExceptionDefn.Malformed_Decl er ->
+      let () = Pp.error Format.pp_print_string er in
+      exit 2
 
 let () = main ()
