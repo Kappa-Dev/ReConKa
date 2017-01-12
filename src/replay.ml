@@ -19,52 +19,80 @@ let init_state = {
   connected_components = Mods.IntMap.empty;
 }
 
-let do_negative_part ((a,_),s) graph =
+let break_apart_cc graph ccs = function
+  | None -> ccs
+  | Some (origin_cc,new_cc) ->
+    let set = Mods.IntMap.find_default Mods.IntSet.empty origin_cc ccs in
+    if Mods.IntSet.is_empty set then ccs
+    else
+      let nset,oset' =
+        Mods.IntSet.partition
+          (fun x -> Edges.get_connected_component x graph = Some new_cc)
+          set in
+      Mods.IntMap.add new_cc nset (Mods.IntMap.add origin_cc oset' ccs)
+
+
+let merge_cc ccs = function
+  | None -> ccs
+  | Some (cc1,cc2) ->
+    let set1 = Mods.IntMap.find_default Mods.IntSet.empty cc1 ccs in
+    match Mods.IntMap.pop cc2 ccs with
+    | None, _ -> ccs
+    | Some set2,ccs' -> Mods.IntMap.add cc1 (Mods.IntSet.union set1 set2) ccs'
+
+let do_negative_part ((a,_),s) (graph,ccs) =
   match Edges.link_destination a s graph with
-  | None -> Edges.remove_free a s graph
+  | None -> (Edges.remove_free a s graph,ccs)
   | Some ((a',_),s') ->
     let graph',cc_change = Edges.remove_link a s a' s' graph in
-    graph'
+    (graph',break_apart_cc graph' ccs cc_change)
 
-let do_action sigs graph = function
+let do_action sigs (graph,ccs as pack) = function
   | Instantiation.Create ((id,ty),_graphs) ->
-    snd @@ Edges.add_agent ~id sigs ty graph
+    (snd @@ Edges.add_agent ~id sigs ty graph,
+     Mods.IntMap.add id (Mods.IntSet.singleton id) ccs)
   | Instantiation.Mod_internal (((a,_),s),i) ->
-    Edges.add_internal a s i graph
+    (Edges.add_internal a s i graph,ccs)
   | Instantiation.Bind ((a1,s1 as x1),(a2,s2 as x2))
   | Instantiation.Bind_to ((a1,s1 as x1),(a2,s2 as x2)) ->
-    let graph',cc_change =
-      Edges.add_link a1 s1 a2 s2
-        (do_negative_part x2 (do_negative_part x1 graph)) in
-    graph'
+    let graph',ccs' = do_negative_part x2 (do_negative_part x1 pack) in
+    let graph'',cc_change = Edges.add_link a1 s1 a2 s2 graph' in
+    (graph'',merge_cc ccs' cc_change)
   | Instantiation.Free ((a,_),s as x) ->
-    Edges.add_free a s (do_negative_part x graph)
+    let graph',ccs' =  do_negative_part x pack in
+    (Edges.add_free a s graph',ccs')
   | Instantiation.Remove (id,ty as a) ->
-    Edges.remove_agent id
-      (Tools.recti (fun st s -> do_negative_part (a,s) st)
-         graph (Signature.arity sigs ty))
+    let graph',ccs' =
+      Tools.recti (fun st s -> do_negative_part (a,s) st)
+        pack (Signature.arity sigs ty) in
+    match Mods.IntMap.pop id ccs' with
+    | None,_ -> assert false
+    | Some x,ccs'' ->
+      let () = assert (Mods.IntSet.is_singleton x) in
+      (Edges.remove_agent id graph',ccs'')
+
 
 let do_step sigs state = function
   | Trace.Subs _ -> state
   | Trace.Event (_,event,info) ->
-    {
-      graph =
+    let pregraph,connected_components =
         List.fold_left
-          (fun graph ((id,_),s) -> Edges.add_free id s graph)
-          (List.fold_left
-             (do_action sigs) state.graph
-             event.Instantiation.actions)
-          event.Instantiation.side_effects_dst;
+           (do_action sigs) (state.graph,state.connected_components)
+           event.Instantiation.actions in
+    let graph =
+      List.fold_left
+        (fun graph ((id,_),s) -> Edges.add_free id s graph)
+        pregraph event.Instantiation.side_effects_dst in
+    {
+      graph; connected_components;
       time = info.Trace.Simulation_info.story_time;
       event = info.Trace.Simulation_info.story_event;
-      connected_components = state.connected_components;
     }
   | Trace.Init actions ->
-    {
-      graph = List.fold_left (do_action sigs) state.graph actions;
-      time = state.time; event = state.event;
-      connected_components = state.connected_components;
-    }
+    let graph,connected_components =
+      List.fold_left
+        (do_action sigs) (state.graph, state.connected_components) actions in
+    { graph; connected_components; time = state.time; event = state.event; }
   | Trace.Obs (_,_,info) ->
     {
       graph = state.graph;
