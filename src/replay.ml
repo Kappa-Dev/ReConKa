@@ -1,7 +1,7 @@
-(* ReConKa
+(* This file is part of ReConKa
    Copyright 2017 Harvard Medical School
 
-   This program is free software: you can redistribute it and/or modify
+   ReConKa is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 3 as
    published by the Free Software Foundation. *)
 
@@ -30,7 +30,6 @@ let break_apart_cc graph ccs = function
           (fun x -> Edges.get_connected_component x graph = Some new_cc)
           set in
       Mods.IntMap.add new_cc nset (Mods.IntMap.add origin_cc oset' ccs)
-
 
 let merge_cc ccs = function
   | None -> ccs
@@ -70,7 +69,6 @@ let do_action sigs (graph,ccs as pack) = function
     | Some x,ccs'' ->
       let () = assert (Mods.IntSet.is_singleton x) in
       (Edges.remove_agent id graph',ccs'')
-
 
 let do_step sigs state = function
   | Trace.Subs _ -> state

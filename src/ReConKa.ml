@@ -1,19 +1,24 @@
-(* ReConKa
+(* This file is part of ReConKa.
    Copyright 2017 Harvard Medical School
 
-   This program is free software: you can redistribute it and/or modify
+   ReConKa is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 3 as
    published by the Free Software Foundation. *)
 
-let file = ref ""
+let in_file = ref ""
+let out_file = ref "data.csv"
+let period = ref 100
 
 let usage =
   Sys.argv.(0) ^
   " replay a Kappa simulation trace and give connectivity information on it"
 
-let options = []
+let options = [
+  "-p",Arg.Set_int period,"Plot period";
+  "-o",Arg.Set_string out_file,"output file"
+]
 
-let replay fname =
+let replay plot fname =
   let desc = open_in fname in
   let lex_buf = Lexing.from_channel desc in
   let lex_st = Yojson.init_lexer ~fname () in
@@ -40,6 +45,7 @@ let replay fname =
       (fun state x y ->
          let step = Trace.step_of_yojson (Yojson.Basic.read_json x y) in
          let state' = Replay.do_step (Model.signatures env) state step in
+         let () = Output.maybe_plot plot state' in
          let () =
            Progress_report.tick
              state'.Replay.time 0. state'.Replay.event 0. progress in
@@ -58,18 +64,21 @@ let main () =
   let () =
     Arg.parse
       options
-      (fun f -> if !file = "" then file := f else
+      (fun f -> if !in_file = "" then in_file := f else
           let () = Format.eprintf "Deals only with 1 file" in exit 2)
       usage in
-  if!file = "" then
+  if!in_file = "" then
     Arg.usage options usage
   else
+    let plot = Output.open_plot ~period:!period !out_file in
     try
-      replay !file
+      let () = replay plot !in_file in
+      Output.close_plot plot
     with
     | ExceptionDefn.Internal_Error er
     | ExceptionDefn.Malformed_Decl er ->
       let () = Pp.error Format.pp_print_string er in
+      let () = Output.close_plot plot in
       exit 2
 
 let () = main ()
