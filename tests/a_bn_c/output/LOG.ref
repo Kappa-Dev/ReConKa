@@ -1,0 +1,22 @@
++ Command line to rerun is: 'KaSim' '-u' 'e' '-l' '200' '-seed' '656095496' '-trace' '/tmp/trace-a_bn_c.json' '-d' 'output' '-p' '2' 'a_bn_c.ka'
+Parsing a_bn_c.ka...
+done
++ Sanity checks
++ Compiling...
++ Building initial simulation conditions...
+	 -simulation parameters
+	 -variable declarations
+	 -rules
+	 -perturbations
+	 -observables
+	 -update_domain construction
+	 18 (sub)observables 0 navigation steps
+	 -initial conditions
++ Building initial state
+Done
+____________________________________________________________
+############################################################
+Simulation ended (eff.: 0.653595, detail below)
+	Valid embedding but no longer unary when required: 100.00%
+________________________________________________________________________________
+################################################################################

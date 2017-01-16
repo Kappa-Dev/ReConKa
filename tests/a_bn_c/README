@@ -1,0 +1,8 @@
+#!/bin/sh
+
+TRACE=/tmp/trace-$(basename $PWD).json
+
+"${KAPPABIN}"KaSim -u e -l 200 -seed 656095496 -trace $TRACE -d output -p 2 a_bn_c.ka && \
+../../ReConKa.native -d output --csv ${TRACE} || exit 0
+
+rm -f ${TRACE}

@@ -1,0 +1,22 @@
++ Command line to rerun is: 'KaSim' '-u' 'event' '-l' '200' '-seed' '438438234' '-trace' '/tmp/trace-abbc.json' '-d' 'output' '-p' '2' 'abbc.ka'
+Parsing abbc.ka...
+done
++ Sanity checks
++ Compiling...
++ Building initial simulation conditions...
+	 -simulation parameters
+	 -variable declarations
+	 -rules
+	 -perturbations
+	 -observables
+	 -update_domain construction
+	 11 (sub)observables 0 navigation steps
+	 -initial conditions
++ Building initial state
+Done
+____________________________________________________________
+############################################################
+Simulation ended (eff.: 0.990099, detail below)
+	Clashing instance: 100.00%
+________________________________________________________________________________
+################################################################################
