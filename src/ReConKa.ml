@@ -6,8 +6,9 @@
    published by the Free Software Foundation. *)
 
 let in_file = ref ""
-let out_file = ref "data.csv"
+let out_file = ref "connectivity.csv"
 let period = ref 100
+let raw_distances = ref false
 
 let usage =
   Sys.argv.(0) ^
@@ -15,10 +16,12 @@ let usage =
 
 let options = [
   "-p",Arg.Set_int period,"Plot period";
-  "-o",Arg.Set_string out_file,"output file"
+  "-o",Arg.Set_string out_file,"output file";
+  "-d",Arg.String Output.set_dir,"Output directory";
+  "--csv",Arg.Set raw_distances,"output only csv files";
 ]
 
-let replay plot fname =
+let replay fname =
   let desc = open_in fname in
   let lex_buf = Lexing.from_channel desc in
   let lex_st = Yojson.init_lexer ~fname () in
@@ -40,25 +43,45 @@ let replay plot fname =
   let () = Yojson.Basic.read_space lex_st lex_buf in
   let () = Yojson.Basic.read_colon lex_st lex_buf in
   let () = Yojson.Basic.read_space lex_st lex_buf in
+  let rule_names =
+    let size = Model.nb_syntactic_rules env + 1 in
+    Array.init
+      size
+      (Format.asprintf "%a" (Model.print_ast_rule ~env)) in
+  let plot = Output.open_plot
+      ~period:!period ~distances_in_json:(not !raw_distances)
+      rule_names !out_file in
   let progress = Progress_report.create 80 '#' in
-  let final = Yojson.Basic.read_sequence
-      (fun state x y ->
-         let step = Trace.step_of_yojson (Yojson.Basic.read_json x y) in
-         let state' = Replay.do_step (Model.signatures env) state step in
-         let () = Output.maybe_plot plot state' in
-         let () =
-           Progress_report.tick
-             state'.Replay.time 0. state'.Replay.event 0. progress in
-         state')
-      Replay.init_state lex_st lex_buf in
-  let () = Progress_report.complete_progress_bar
-      final.Replay.time final.Replay.event progress in
-  let () = Yojson.Basic.read_space lex_st lex_buf in
-  let () = try Yojson.Basic.read_object_end lex_buf
-    with Yojson.End_of_object -> () in
-  let () = Yojson.Basic.read_space lex_st lex_buf in
-  let () = close_in desc in
- ()
+  try
+    let final = Yojson.Basic.read_sequence
+        (fun state x y ->
+           let step = Trace.step_of_yojson (Yojson.Basic.read_json x y) in
+           let state',dist = Replay.do_step (Model.signatures env) state step in
+           let () = Output.maybe_plot plot state' in
+           let () = match dist with
+             | None -> ()
+             | Some (rule,length) ->
+               Output.new_distance rule state'.Replay.time length in
+           let () =
+             Progress_report.tick
+               state'.Replay.time 0. state'.Replay.event 0. progress in
+           state')
+        Replay.init_state lex_st lex_buf in
+    let () = Progress_report.complete_progress_bar
+        final.Replay.time final.Replay.event progress in
+    let () = Yojson.Basic.read_space lex_st lex_buf in
+    let () = try Yojson.Basic.read_object_end lex_buf
+      with Yojson.End_of_object -> () in
+    let () = Yojson.Basic.read_space lex_st lex_buf in
+    let () = close_in desc in
+    Output.close_plot plot
+  with
+  | ExceptionDefn.Internal_Error er
+  | ExceptionDefn.Malformed_Decl er ->
+    let () = Pp.error Format.pp_print_string er in
+    let () = Output.close_plot plot in
+    let () = close_in desc in
+    exit 2
 
 let main () =
   let () =
@@ -70,15 +93,6 @@ let main () =
   if!in_file = "" then
     Arg.usage options usage
   else
-    let plot = Output.open_plot ~period:!period !out_file in
-    try
-      let () = replay plot !in_file in
-      Output.close_plot plot
-    with
-    | ExceptionDefn.Internal_Error er
-    | ExceptionDefn.Malformed_Decl er ->
-      let () = Pp.error Format.pp_print_string er in
-      let () = Output.close_plot plot in
-      exit 2
+    replay !in_file
 
 let () = main ()

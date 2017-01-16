@@ -70,9 +70,30 @@ let do_action sigs (graph,ccs as pack) = function
       let () = assert (Mods.IntSet.is_singleton x) in
       (Edges.remove_agent id graph',ccs'')
 
+let involved_agents l =
+  List_util.map_option
+    (function
+      | Instantiation.Is_Here a -> Some a
+      | Instantiation.Is_Free _ | Instantiation.Has_Internal _
+      | Instantiation.Is_Bound _ | Instantiation.Is_Bound_to _
+      | Instantiation.Has_Binding_type _ -> None) l
+
+let store_distances kind graph = function
+  | [ cc1; cc2 ] ->
+    begin match kind with
+      | Trace.OBS _ | Trace.INIT _ | Trace.PERT _ -> None
+      | Trace.RULE r ->
+        match Edges.are_connected graph
+                (involved_agents cc1) (involved_agents cc2) with
+        | None -> None
+        | Some path -> Some (r,List.length path)
+    end
+  | _ -> None
+
 let do_step sigs state = function
-  | Trace.Subs _ -> state
-  | Trace.Event (_,event,info) ->
+  | Trace.Subs _ -> state,None
+  | Trace.Event (kind,event,info) ->
+    let dist = store_distances kind state.graph event.Instantiation.tests in
     let pregraph,connected_components =
         List.fold_left
            (do_action sigs) (state.graph,state.connected_components)
@@ -85,17 +106,18 @@ let do_step sigs state = function
       graph; connected_components;
       time = info.Trace.Simulation_info.story_time;
       event = info.Trace.Simulation_info.story_event;
-    }
+    },dist
   | Trace.Init actions ->
     let graph,connected_components =
       List.fold_left
         (do_action sigs) (state.graph, state.connected_components) actions in
-    { graph; connected_components; time = state.time; event = state.event; }
+    { graph; connected_components; time = state.time; event = state.event; },
+    None
   | Trace.Obs (_,_,info) ->
     {
       graph = state.graph;
       time = info.Trace.Simulation_info.story_time;
       event = info.Trace.Simulation_info.story_event;
       connected_components = state.connected_components;
-    }
-  | Trace.Dummy _ -> state
+    },None
+  | Trace.Dummy _ -> state,None
