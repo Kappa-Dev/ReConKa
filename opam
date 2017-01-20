@@ -1,0 +1,19 @@
+opam-version: "1.2"
+name: "ReConKa"
+version: "dev"
+maintainer: "Pierre Boutillier <pierre.boutillier@laposte.net>"
+authors: "Pierre Boutillier <pierre_boutillier@hms.harvard.edu>"
+homepage: "https://github.com/Kappa-Dev/ReConKa"
+bug-reports: "https://github.com/Kappa-Dev/ReConKa/issues"
+license: "GPL-3"
+dev-repo: "https://github.com/Kappa-Dev/ReConKa.git"
+build: [ "ocamlbuild" "ReConKa.native" ]
+build-test: [
+  [ make "-C" "tests" "clean" ]
+  [ make "-C" "tests" "all" ]
+]
+depends: [
+  "ocamlfind" {build}
+  "ocamlbuild" {build}
+  "KaSim" {>= "4~"}
+]

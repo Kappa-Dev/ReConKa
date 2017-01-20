@@ -83,8 +83,9 @@ let store_distances kind graph = function
     begin match kind with
       | Trace.OBS _ | Trace.INIT _ | Trace.PERT _ -> None
       | Trace.RULE r ->
-        match Edges.are_connected graph
-                (involved_agents cc1) (involved_agents cc2) with
+        let cc1_ags = involved_agents cc1 in
+        let cc2_ags = involved_agents cc2 in
+        match Edges.are_connected graph cc1_ags cc2_ags with
         | None -> None
         | Some path -> Some (r,List.length path)
     end
