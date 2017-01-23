@@ -7,7 +7,7 @@
 
 let in_file = ref ""
 let out_file = ref "connectivity.csv"
-let period = ref 100
+let period = ref 1000
 let raw_distances = ref false
 
 let usage =
