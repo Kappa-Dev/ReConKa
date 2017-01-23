@@ -138,6 +138,6 @@ let close_plot p =
     | None -> ()
     | Some (rules,data) ->
       output_unary_distances !jsonDistancesDescr data rules in
-  let () = Format.pp_flush_formatter p.form in
+  let () = Format.pp_print_flush p.form () in
   let () = close_out p.chan in
   ()
