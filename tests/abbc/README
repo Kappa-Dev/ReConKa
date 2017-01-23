@@ -3,6 +3,6 @@
 TRACE=/tmp/trace-$(basename $PWD).json
 
 "${KAPPABIN}"KaSim -u event -l 200 -seed 438438234 -trace ${TRACE} -d output -p 2 abbc.ka && \
-../../ReConKa.native -d output -o connectivity.csv ${TRACE} || exit 0
+../../ReConKa.native -p 10 -d output -o connectivity.csv ${TRACE} || exit 0
 
 rm -f ${TRACE}
