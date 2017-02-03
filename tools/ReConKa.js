@@ -29,7 +29,7 @@ var renderData = function (data) {
 
     var max_cc = d3.max(data, function(d) { return d.max; });
 
-    x.domain([0, d3.max(data, function(d) { return d.time; })]).nice();
+    x.domain([d3.min(data, function(d) { return d.time; }), d3.max(data, function(d) { return d.time; })]).nice();
     y.domain([0, d3.max(data, function(d) { return d.total; })]).nice();
     z.domain([0, max_cc]);
 
