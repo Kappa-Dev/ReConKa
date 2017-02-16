@@ -1,5 +1,4 @@
 # Output of 'KaSim' '-u' 'e' '-l' '200' '-seed' '656095496' '-trace' '/tmp/trace-a_bn_c.json' '-d' 'output' '-p' '2' 'a_bn_c.ka'
-# "uuid" : "347340041"
 "[T]", "Ap", "Cp"
 0., 0, 100
 0.00440011287357, 0, 100

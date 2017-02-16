@@ -1,4 +1,3 @@
-# "uuid" : "680025839"
 %def: "seed" "438438234"
 %def: "plotPeriod" "2" "events"
 %def: "outputFileName" "data.csv"
