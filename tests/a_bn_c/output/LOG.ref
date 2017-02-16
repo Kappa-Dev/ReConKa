@@ -1,4 +1,3 @@
-+ Command line to rerun is: 'KaSim' '-u' 'e' '-l' '200' '-seed' '656095496' '-trace' '/tmp/trace-a_bn_c.json' '-d' 'output' '-p' '2' 'a_bn_c.ka'
 Parsing a_bn_c.ka...
 done
 + Sanity checks
@@ -14,9 +13,11 @@ done
 	 -initial conditions
 + Building initial state
 Done
++ Command line to rerun is: 'KaSim' '-u' 'e' '-l' '200' '-seed' '656095496' '-trace' '/tmp/trace-a_bn_c.json' '-d' 'output' '-p' '2' 'a_bn_c.ka'
 ____________________________________________________________
 ############################################################
-Simulation ended (eff.: 0.653595, detail below)
+Simulation ended
+65.36% of event loops were productive. Null event cause:
 	Valid embedding but no longer unary when required: 100.00%
 ________________________________________________________________________________
 ################################################################################

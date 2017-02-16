@@ -1,4 +1,3 @@
-+ Command line to rerun is: 'KaSim' '-u' 'event' '-l' '200' '-seed' '438438234' '-trace' '/tmp/trace-abbc.json' '-d' 'output' '-p' '2' 'abbc.ka'
 Parsing abbc.ka...
 done
 + Sanity checks
@@ -14,9 +13,11 @@ done
 	 -initial conditions
 + Building initial state
 Done
++ Command line to rerun is: 'KaSim' '-u' 'event' '-l' '200' '-seed' '438438234' '-trace' '/tmp/trace-abbc.json' '-d' 'output' '-p' '2' 'abbc.ka'
 ____________________________________________________________
 ############################################################
-Simulation ended (eff.: 0.990099, detail below)
+Simulation ended
+99.01% of event loops were productive. Null event cause:
 	Clashing instance: 100.00%
 ________________________________________________________________________________
 ################################################################################
