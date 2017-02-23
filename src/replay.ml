@@ -78,22 +78,18 @@ let involved_agents l =
       | Instantiation.Is_Bound _ | Instantiation.Is_Bound_to _
       | Instantiation.Has_Binding_type _ -> None) l
 
-let store_distances kind graph = function
+let store_distances r graph = function
+  | [] | [ _ ] | _ :: _ :: _ :: _ -> None
   | [ cc1; cc2 ] ->
-    begin match kind with
-      | Trace.OBS _ | Trace.INIT _ | Trace.PERT _ -> None
-      | Trace.RULE r ->
-        let cc1_ags = involved_agents cc1 in
-        let cc2_ags = involved_agents cc2 in
-        match Edges.are_connected graph cc1_ags cc2_ags with
-        | None -> None
-        | Some path -> Some (r,List.length path)
-    end
-  | _ -> None
+    let cc1_ags = involved_agents cc1 in
+    let cc2_ags = involved_agents cc2 in
+    match Edges.are_connected graph cc1_ags cc2_ags with
+    | None -> None
+    | Some path -> Some (r,List.length path)
 
 let do_step sigs state = function
   | Trace.Subs _ -> state,None
-  | Trace.Event (kind,event,info) ->
+  | Trace.Rule (kind,event,info) ->
     let dist = store_distances kind state.graph event.Instantiation.tests in
     let pregraph,connected_components =
         List.fold_left
@@ -108,6 +104,20 @@ let do_step sigs state = function
       time = info.Trace.Simulation_info.story_time;
       event = info.Trace.Simulation_info.story_event;
     },dist
+  | Trace.Pert (_,event,info) ->
+    let pregraph,connected_components =
+        List.fold_left
+           (do_action sigs) (state.graph,state.connected_components)
+           event.Instantiation.actions in
+    let graph =
+      List.fold_left
+        (fun graph ((id,_),s) -> Edges.add_free id s graph)
+        pregraph event.Instantiation.side_effects_dst in
+    {
+      graph; connected_components;
+      time = info.Trace.Simulation_info.story_time;
+      event = info.Trace.Simulation_info.story_event;
+    },None
   | Trace.Init actions ->
     let graph,connected_components =
       List.fold_left
