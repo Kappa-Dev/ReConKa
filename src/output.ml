@@ -117,14 +117,16 @@ let open_plot ~period ~distances_in_json rule_names file_name =
   let form = Format.formatter_of_out_channel chan in
   { period; chan; form }
 
-let size_landscape ccs =
-  let out = Mods.DynArray.create 0 0 in
-  let () =
-    Mods.IntMap.iter
-      (fun _ s -> let ss = Mods.IntSet.size s in
-      Mods.DynArray.set out ss (succ (Mods.DynArray.get out ss)))
-      ccs in
-  out
+let size_landscape = function
+  | None -> assert false
+  | Some ccs ->
+    let out = Mods.DynArray.create 0 0 in
+    let () =
+      Mods.IntMap.iter
+        (fun _ s -> let ss = Mods.IntSet.size s in
+          Mods.DynArray.set out ss (succ (Mods.DynArray.get out ss)))
+        ccs in
+    out
 
 let maybe_plot p state =
   if state.Replay.event mod p.period = 0 && state.Replay.event > 0 then

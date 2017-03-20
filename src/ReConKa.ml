@@ -75,7 +75,7 @@ let replay fname =
              Progress_report.tick
                state'.Replay.time 0. state'.Replay.event 0. progress in
            state')
-        Replay.init_state lex_st lex_buf in
+        (Replay.init_state ~with_connected_components:true) lex_st lex_buf in
     let () = Progress_report.complete_progress_bar
         final.Replay.time final.Replay.event progress in
     let () = Yojson.Basic.read_space lex_st lex_buf in
