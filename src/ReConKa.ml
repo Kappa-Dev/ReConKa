@@ -70,7 +70,9 @@ let replay fname =
            let () = match dist with
              | None -> ()
              | Some (rule,length) ->
-               Output.new_distance rule state'.Replay.time length in
+               Output.new_distance
+                 (Model.get_rule env rule).Primitives.syntactic_rule
+                 state'.Replay.time length in
            let () =
              Progress_report.tick
                state'.Replay.time 0. state'.Replay.event 0. progress in

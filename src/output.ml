@@ -123,7 +123,7 @@ let size_landscape = function
     let out = Mods.DynArray.create 0 0 in
     let () =
       Mods.IntMap.iter
-        (fun _ s -> let ss = Mods.IntSet.size s in
+        (fun _ s -> let ss = Agent.SetMap.Set.size s in
           Mods.DynArray.set out ss (succ (Mods.DynArray.get out ss)))
         ccs in
     out
